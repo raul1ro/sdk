@@ -237,6 +237,16 @@ const testCases = {
     slippage: BPS,
     amountIn: 10e9,
   },
+  [Protocol.TRADEPORT]: {
+    sender:
+      '0xa52b3f2e8b3f0dac377f753eeade7f7c6b329a97c227425a59b91c1e2f8dff2c',
+    tokenIn: normalizeStructTag(SUI_TYPE_ARG),
+    tokenOut: normalizeStructTag(
+      '0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC'
+    ),
+    slippage: BPS,
+    amountIn: 1e9,
+  },
 };
 
 describe('UniversalRouter', () => {
@@ -637,6 +647,26 @@ describe('UniversalRouter', () => {
       if (resp.effects.status.status !== 'success') {
         console.dir(resp.error, { depth: 10 });
       }
+    });
+  });
+
+  describe('#Raw Quote', () => {
+    it('Return raw quote', async () => {
+      const input: any = {
+        sender: ADDRESS_ZERO,
+        tokenIn:
+          '0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN',
+        tokenOut: normalizeStructTag(SUI_TYPE_ARG),
+        slippage: BPS,
+        amountIn: '10000000',
+      };
+      const quoter = new AggregatorQuoter(network, 'test');
+      const result = await quoter.getRoutes({
+        ...input,
+      });
+      expect(result.rawQuote != null);
+      expect(result.rawQuote?.data.tokenIn).toEqual(input.tokenIn);
+      expect(result.rawQuote?.data.tokenOut).toEqual(input.tokenOut);
     });
   });
 });

@@ -37,7 +37,7 @@ export const I128_BITS = 128;
 export const CONFIGS = {
   mainnet: {
     packageId:
-      '0xe882cd54551e73e64ff5b257146a0c5264546974cf00d78ecc871017cb22df67',
+      '0xde2c47eb0da8c74e4d0f6a220c41619681221b9c2590518095f0f0c2d3f3c772',
     poolRegistryObject:
       '0x27565d24a4cd51127ac90e4074a841bbe356cca7bf5759ddc14a975be1632abc',
     positionRegistryObject:

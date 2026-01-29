@@ -28,3 +28,6 @@ export * from './MomentumFinanceSwap';
 export * from './FullSailSwap';
 export * from './SevenKV1DexSwap';
 export * from './IpxTideSwap';
+export * from './TradeportSwap';
+export * from './DipCoinDexSwap';
+export * from './CetusDlmmSwap';

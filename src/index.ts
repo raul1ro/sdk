@@ -6,3 +6,6 @@ export * from './clmm';
 export * from './core';
 export * from './limit-order';
 export * from './auto-invest';
+export * from './price-predict';
+export * from './bridge';
+export * from './perp_v1';

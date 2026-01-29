@@ -17,6 +17,8 @@ import { ZapCalculator } from './utils/ZapCalculator';
 import {
   AggregatorQuoter,
   BPS,
+  Commission,
+  CommissionType,
   GetRoutesResult,
   Protocol,
   TradeBuilder,
@@ -36,6 +38,10 @@ interface RebalanceOptions {
   excludeSources?: Protocol[];
   priceProvider?: PriceProvider;
   client?: SuiClient;
+  commission?: {
+    address: string;
+    fee: number;
+  };
 }
 
 export class Rebalancer {
@@ -167,6 +173,7 @@ export class Rebalancer {
 
       //Only one of the two assets, X or Y, is redundant when liquidity is added.
       if (remainingX.gt(new BN(minZapAmounts.amountX))) {
+        const commission = options?.commission ? new Commission(options.commission.address, new Coin(coinYType), CommissionType.PERCENTAGE, options.commission.fee, false) : undefined;
         const zapAmount = await ZapCalculator.zapAmount({
           pool: position.pool,
           tickLower,
@@ -183,6 +190,7 @@ export class Rebalancer {
           includeSources: options?.includeSources,
           excludeSources: options?.excludeSources || [],
           excludePools: [position.pool.id],
+          commission
         });
         this.checkPriceImpact(quote);
 
@@ -193,9 +201,12 @@ export class Rebalancer {
         );
 
         const [zapCoin] = tx.splitCoins(collectedX, [zapAmount.toString()]);
-        const trade = new TradeBuilder(this.network, quote.routes)
+        const tradeBuilder = new TradeBuilder(this.network, quote.routes)
           .slippage(slippageTolerance.numerator.toNumber())
-          .build();
+        if(commission) {
+          tradeBuilder.commission(commission);
+        }
+        const trade = tradeBuilder.build();
         const coinYOut = (await trade.swap({
           tx,
           coinIn: zapCoin,
@@ -203,6 +214,7 @@ export class Rebalancer {
         })) as TransactionResult;
         tx.mergeCoins(collectedY, [coinYOut]);
       } else if (remainingY.gt(new BN(minZapAmounts.amountY))) {
+        const commission = options?.commission ? new Commission(options.commission.address, new Coin(coinXType), CommissionType.PERCENTAGE, options.commission.fee, false) : undefined;
         const zapAmount = await ZapCalculator.zapAmount({
           pool: position.pool,
           tickLower,
@@ -219,6 +231,7 @@ export class Rebalancer {
           includeSources: options?.includeSources,
           excludeSources: options?.excludeSources || [],
           excludePools: [position.pool.id],
+          commission
         });
         this.checkPriceImpact(quote);
 
@@ -229,9 +242,12 @@ export class Rebalancer {
         );
 
         const [zapCoin] = tx.splitCoins(collectedY, [zapAmount.toString()]);
-        const trade = new TradeBuilder(this.network, quote.routes)
-          .slippage(slippageTolerance.numerator.toNumber())
-          .build();
+        const tradeBuilder = new TradeBuilder(this.network, quote.routes)
+          .slippage(slippageTolerance.numerator.toNumber());
+        if(commission) {
+          tradeBuilder.commission(commission);
+        }
+        const trade = tradeBuilder.build();
         const coinXOut = (await trade.swap({
           tx,
           coinIn: zapCoin,

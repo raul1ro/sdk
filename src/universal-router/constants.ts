@@ -38,6 +38,14 @@ export enum Protocol {
   FULL_SAIL = 'FULL_SAIL',
   SEVENK_V1 = 'SEVENK_V1',
   IPX_TIDE = 'IPX_TIDE',
+  TRADEPORT = 'TRADEPORT',
+  DIPCOIN = 'DIPCOIN',
+  FERRA_DLMM = 'FERRA_DLMM',
+  FERRA_CLMM = 'FERRA_CLMM',
+  MAGMA_ALMM = 'MAGMA_ALMM',
+  SUI_REWARDS = 'SUI_REWARDS',
+  CETUS_DLMM = 'CETUS_DLMM',
+  BOLT = 'BOLT',
 }
 
 export enum CommissionType {

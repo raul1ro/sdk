@@ -27,6 +27,7 @@ import {
   CetusSwap,
   DeepbookSwap,
   DeepbookV3Swap,
+  DipCoinDexSwap,
   FlowxPmmSwap,
   FlowxV2Swap,
   FlowxV3Swap,
@@ -45,10 +46,13 @@ import {
   SevenKV1DexSwap,
   SpringSuiSwap,
   SteammSwap,
+  TradeportSwap,
   TurbosFunSwap,
   TurbosSwap,
   VoloLsdSwap,
+  CetusDlmmSwap,
 } from '../entities/protocols';
+import { FerraClmmSwap } from '../entities/protocols/FerraClmmSwap';
 import { OracleInfo, SteammQuoterType } from '../types';
 import JsonBigInt from '../utils/JsonBigInt';
 import { IBatchQuoter } from './IBatchQuoter';
@@ -58,6 +62,10 @@ import {
   GetRoutesResult,
   SingleQuoteQueryParams,
 } from './types';
+import { FerraDlmmSwap } from '../entities/protocols/FerraDlmmSwap';
+import { MagmaAlmmSwap } from '../entities/protocols/MagmaAlmmSwap';
+import { SuiRewardsMeSwap } from '../entities/protocols/SuiRewardsMeSwap';
+import { BoltSwap } from '../entities/protocols/BoltSwap';
 
 interface AggregatorQuoterResponse {
   code: number;
@@ -709,6 +717,144 @@ export class AggregatorQuoter
           protocolConfig,
         });
       }
+      case Protocol.TRADEPORT: {
+        const extra = path.extra as FlowxV3Extra;
+        const [minSqrtPriceX64HasLiquidity, maxSqrtPriceX64HasLiquidity] = [
+          new BN(
+            extra.minSqrtPriceHasLiquidity?.toString() ||
+              ClmmTickMath.MIN_SQRT_RATIO
+          ),
+          new BN(
+            extra.maxSqrtPriceHasLiquidity?.toString() ||
+              ClmmTickMath.MAX_SQRT_RATIO
+          ),
+        ];
+        return new TradeportSwap({
+          network: this.network,
+          pool: new ObjectId(path.poolId),
+          input: new Coin(path.tokenIn),
+          output: new Coin(path.tokenOut),
+          amountIn: path.amountIn.toString(),
+          amountOut: path.amountOut.toString(),
+          xForY: !!extra.swapXToY,
+          poolFee: extra.fee || '0',
+          sqrtPriceX64Limit: extra.nextStateSqrtRatioX64?.toString() || '0',
+          maxSqrtPriceX64HasLiquidity: minBn(
+            ClmmTickMath.MAX_SQRT_RATIO.sub(ONE),
+            maxSqrtPriceX64HasLiquidity
+          ),
+          minSqrtPriceX64HasLiquidity: maxBn(
+            ClmmTickMath.MIN_SQRT_RATIO.add(ONE),
+            minSqrtPriceX64HasLiquidity
+          ),
+          protocolConfig,
+        });
+      }
+      case Protocol.DIPCOIN: {
+        return new DipCoinDexSwap({
+          network: this.network,
+          pool: new ObjectId(path.poolId),
+          input: new Coin(path.tokenIn),
+          output: new Coin(path.tokenOut),
+          amountIn: path.amountIn.toString(),
+          amountOut: path.amountOut.toString(),
+          xForY: !!path.extra.swapXToY,
+          protocolConfig,
+        });
+      }
+      case Protocol.FERRA_DLMM: {
+        return new FerraDlmmSwap({
+          network: this.network,
+          pool: new ObjectId(path.poolId),
+          input: new Coin(path.tokenIn),
+          output: new Coin(path.tokenOut),
+          amountIn: path.amountIn.toString(),
+          amountOut: path.amountOut.toString(),
+          xForY: !!path.extra.swapXToY,
+          protocolConfig,
+        });
+      }
+      case Protocol.FERRA_CLMM: {
+        const extra = path.extra as FlowxV3Extra;
+        const [minSqrtPriceX64HasLiquidity, maxSqrtPriceX64HasLiquidity] = [
+          new BN(
+            extra.minSqrtPriceHasLiquidity?.toString() ||
+              ClmmTickMath.MIN_SQRT_RATIO
+          ),
+          new BN(
+            extra.maxSqrtPriceHasLiquidity?.toString() ||
+              ClmmTickMath.MAX_SQRT_RATIO
+          ),
+        ];
+        return new FerraClmmSwap({
+          network: this.network,
+          pool: new ObjectId(path.poolId),
+          input: new Coin(path.tokenIn),
+          output: new Coin(path.tokenOut),
+          amountIn: path.amountIn.toString(),
+          amountOut: path.amountOut.toString(),
+          xForY: !!extra.swapXToY,
+          sqrtPriceX64Limit: extra.nextStateSqrtRatioX64?.toString() || '0',
+          maxSqrtPriceX64HasLiquidity: minBn(
+            ClmmTickMath.MAX_SQRT_RATIO.sub(ONE),
+            maxSqrtPriceX64HasLiquidity
+          ),
+          minSqrtPriceX64HasLiquidity: maxBn(
+            ClmmTickMath.MIN_SQRT_RATIO.add(ONE),
+            minSqrtPriceX64HasLiquidity
+          ),
+          protocolConfig,
+        });
+      }
+      case Protocol.MAGMA_ALMM: {
+        return new MagmaAlmmSwap({
+          network: this.network,
+          pool: new ObjectId(path.poolId),
+          input: new Coin(path.tokenIn),
+          output: new Coin(path.tokenOut),
+          amountIn: path.amountIn.toString(),
+          amountOut: path.amountOut.toString(),
+          xForY: path.extra.swapXToY,
+          protocolConfig,
+        });
+      }
+      case Protocol.SUI_REWARDS:
+        return new SuiRewardsMeSwap({
+          network: this.network,
+          pool: new ObjectId(path.poolId),
+          input: new Coin(path.tokenIn),
+          output: new Coin(path.tokenOut),
+          amountIn: path.amountIn.toString(),
+          amountOut: path.amountOut.toString(),
+          xForY: !!path.extra.swapXToY,
+          protocolConfig,
+        });
+      case Protocol.CETUS_DLMM: {
+        return new CetusDlmmSwap({
+          network: this.network,
+          pool: new ObjectId(path.poolId),
+          input: new Coin(path.tokenIn),
+          output: new Coin(path.tokenOut),
+          amountIn: path.amountIn.toString(),
+          amountOut: path.amountOut.toString(),
+          xForY: path.extra.swapXToY,
+          protocolConfig,
+        });
+      }
+      case Protocol.BOLT: {
+        const extra = path.extra as OracleExtra;
+        return new BoltSwap({
+          network: this.network,
+          pool: new ObjectId(path.poolId),
+          input: new Coin(path.tokenIn),
+          output: new Coin(path.tokenOut),
+          amountIn: path.amountIn.toString(),
+          amountOut: path.amountOut.toString(),
+          xForY: path.extra.swapXToY,
+          oracles: extra.oracles,
+          protocolConfig,
+        });
+      }
       default:
         throw new Error(`${path.source} protocol not supported yet`);
     }
@@ -716,13 +862,14 @@ export class AggregatorQuoter
 
   public fromRawQuote(
     rawQuote: AggregatorQuoterResult
-  ): GetRoutesResult<Coin, Coin> {
+  ): GetRoutesResult<Coin, Coin> & { rawQuote?: AggregatorQuoterResult } {
     const priceImpact = new BigNumber(rawQuote.priceImpact)
       .multipliedBy(BPS.toString())
       .div(100)
       .toFixed(0);
-    
+
     return {
+      rawQuote: rawQuote,
       coinIn: new Coin(rawQuote.tokenIn),
       coinOut: new Coin(rawQuote.tokenOut),
       amountIn: rawQuote.amountIn,
@@ -745,7 +892,9 @@ export class AggregatorQuoter
 
   async getRoutes(
     params: SingleQuoteQueryParams
-  ): Promise<GetRoutesResult<Coin, Coin>> {
+  ): Promise<
+    GetRoutesResult<Coin, Coin> & { rawQuote?: AggregatorQuoterResult }
+  > {
     const coinIn = new Coin(params.tokenIn);
     const coinOut = new Token(params.tokenOut);
     const sources = params.includeSources || Object.values(Protocol);
@@ -912,7 +1061,7 @@ export class AggregatorQuoter
           r['feeInBps'] = new BN(p.commission.value)
             .mul(new BN(AGGREGATOR_BPS))
             .div(BPS)
-            .toString();
+            .toNumber();
         } else {
           r['feeAmount'] = p.commission.value.toString();
         }
@@ -925,7 +1074,9 @@ export class AggregatorQuoter
       `${CONFIGS[this.network].quoter.multipleQuotesURI}`,
       {
         method: 'POST',
-        signal: externalSignal ?? AbortSignal.timeout(CONFIGS[this.network].quoter.requestTimeout),
+        signal:
+          externalSignal ??
+          AbortSignal.timeout(CONFIGS[this.network].quoter.requestTimeout),
         body: JSON.stringify(requestBody),
         headers: {
           'Content-Type': 'application/json',

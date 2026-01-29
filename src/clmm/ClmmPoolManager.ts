@@ -67,6 +67,23 @@ export class ClmmPoolManager extends TxBuilder {
     });
   }
 
+  public createPoolV3(pool: ClmmPool) {
+    const tx = this._tx;
+    tx.moveCall({
+      target: `${
+        CONFIGS[this.network].packageId
+      }::${MODULE_POOL_MANAGER}::create_and_initialize_pool_v3`,
+      typeArguments: [pool.coinX.coinType, pool.coinY.coinType],
+      arguments: [
+        tx.object(CONFIGS[this.network].poolRegistryObject),
+        tx.pure.u64(pool.fee),
+        tx.pure.u128(pool.sqrtPriceX64.toString()),
+        tx.object(CONFIGS[this.network].versionObject),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+  }
+
   public async getPoolDetail(poolId: string): Promise<ClmmPool> {
     const poolObject: any = await this._client.getObject({
       id: poolId,
